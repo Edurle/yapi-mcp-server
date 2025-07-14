@@ -1,0 +1,17 @@
+{
+  "mcpServers": {
+    "yapi-mcp-server-stdio": {
+      "type": "stdio",
+      "command": "node",
+      "args": [
+        "***/dist/index.js",
+        "--baseURL",
+        "http://yapi.***.com",
+        "--cookie",
+        "****",
+        "--cache-ttl",
+        "30"
+      ]
+    }
+  }
+}
