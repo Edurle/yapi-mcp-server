@@ -11,6 +11,7 @@ import {
   getConfigFromArgs,
   initialize, // 导入 initialize
   getApiCache, // 导入 getApiCache
+  getInterfacesByCategory, // 导入新函数
   ApiCache
 } from "./request.js";
 
@@ -474,6 +475,66 @@ export function createServer(): McpServer {
                 total: searchResults.length,
                 results: searchResults
               }, null, 2),
+            },
+          ],
+        };
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Error: ${errorMessage}`,
+            },
+          ],
+        };
+      }
+    },
+  );
+
+  // 根据目录名称获取接口
+  server.tool(
+    "get_interfaces_by_category",
+    "Get all interfaces in a specific category by category name from YApi.",
+    {
+      project_id: z.number().describe("YApi project ID"),
+      category_name: z.string().describe("Category name to search for (supports partial matching)"),
+    },
+    async ({ project_id, category_name }) => {
+      try {
+        initializeIfNeeded();
+
+        if (!project_id) {
+          throw new Error("project_id is required.");
+        }
+
+        if (!category_name) {
+          throw new Error("category_name is required.");
+        }
+
+        const interfaces = await getInterfacesByCategory(project_id, category_name);
+
+        // 格式化输出
+        const formattedData = {
+          category_name: category_name,
+          total_interfaces: interfaces.length,
+          interfaces: interfaces.map(item => ({
+            id: item._id,
+            title: item.title,
+            method: item.method,
+            path: item.path,
+            status: item.status,
+            tags: item.tag,
+            add_time: new Date(item.add_time * 1000).toISOString(),
+            update_time: new Date(item.up_time * 1000).toISOString()
+          }))
+        };
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(formattedData, null, 2),
             },
           ],
         };

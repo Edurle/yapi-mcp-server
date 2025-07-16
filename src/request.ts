@@ -686,6 +686,43 @@ async function preloadInterfaceData(projectId: number): Promise<void> {
   }
 }
 
+/**
+ * 根据目录名称获取该目录下的所有接口
+ * @param {number} projectId - 项目ID
+ * @param {string} categoryName - 目录名称
+ * @returns {Promise<ApiCategoryChild[]>} 该目录下的接口列表
+ */
+async function getInterfacesByCategory(projectId: number, categoryName: string): Promise<ApiCategoryChild[]> {
+  try {
+    console.log(`根据目录名称获取接口: project_id=${projectId}, category_name=${categoryName}`);
+    
+    // 获取项目的所有接口列表
+    const interfaces = await getInterfaceList(projectId);
+    
+    // 查找匹配的目录
+    const matchedCategory = interfaces.find(category => 
+      category.name.toLowerCase().includes(categoryName.toLowerCase()) ||
+      categoryName.toLowerCase().includes(category.name.toLowerCase())
+    );
+    
+    if (!matchedCategory) {
+      throw new Error(`未找到名称包含 "${categoryName}" 的目录`);
+    }
+    
+    console.log(`找到匹配的目录: ${matchedCategory.name}, 包含 ${matchedCategory.list.length} 个接口`);
+    
+    return matchedCategory.list;
+  } catch (error) {
+    if (error instanceof ApiError) {
+      console.error(`根据目录名称获取接口失败 - API错误: ${error.errmsg} (errcode: ${error.errcode})`);
+      throw error;
+    } else {
+      console.error('根据目录名称获取接口失败:', error instanceof Error ? error.message : error);
+      throw new Error(error instanceof Error ? error.message : '根据目录名称获取接口时发生未知错误');
+    }
+  }
+}
+
 // 导出主要函数和类
 export {
   ApiError,
@@ -702,5 +739,6 @@ export {
   getConfigFromArgs,
   printUsage,
   initialize, // 新增导出
-  getApiCache // 确保导出
+  getApiCache, // 确保导出
+  getInterfacesByCategory // 新增导出
 };
