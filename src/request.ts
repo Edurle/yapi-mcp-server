@@ -723,6 +723,42 @@ async function getInterfacesByCategory(projectId: number, categoryName: string):
   }
 }
 
+/**
+ * 根据目录id获取该目录下的所有接口
+ * @param {number} projectId - 项目ID
+ * @param {number} categoryId - 目录Id
+ * @returns {Promise<ApiCategoryChild[]>} 该目录下的接口列表
+ */
+async function getInterfacesByCategoryId(projectId: number, categoryId: number): Promise<ApiCategoryChild[]> {
+  try {
+    console.log(`根据目录Id获取接口: project_id=${projectId}, category_id=${categoryId}`);
+    
+    // 获取项目的所有接口列表
+    const interfaces = await getInterfaceList(projectId);
+    
+    // 查找匹配的目录
+    const matchedCategory = interfaces.find(category => 
+      category._id === categoryId
+    );
+    
+    if (!matchedCategory) {
+      throw new Error(`未找到Id为 "${categoryId}" 的目录`);
+    }
+    
+    console.log(`找到匹配的目录: ${matchedCategory.name}(id:${matchedCategory._id}), 包含 ${matchedCategory.list.length} 个接口`);
+    
+    return matchedCategory.list;
+  } catch (error) {
+    if (error instanceof ApiError) {
+      console.error(`根据目录Id获取接口失败 - API错误: ${error.errmsg} (errcode: ${error.errcode})`);
+      throw error;
+    } else {
+      console.error(`根据目录Id获取接口失败: ${error instanceof Error ? error.message : error}`);
+      throw new Error(error instanceof Error ? error.message : '根据目录Id获取接口时发生未知错误');
+    }
+  }
+}
+
 // 导出主要函数和类
 export {
   ApiError,
@@ -740,5 +776,6 @@ export {
   printUsage,
   initialize, // 新增导出
   getApiCache, // 确保导出
-  getInterfacesByCategory // 新增导出
+  getInterfacesByCategory, // 新增导出
+  getInterfacesByCategoryId,
 };

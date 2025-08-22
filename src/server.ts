@@ -7,6 +7,7 @@ import {
   clearProjectCache,
   clearInterfaceCache,
   getCacheStats,
+  getInterfacesByCategoryId,
   preloadInterfaceData,
   getConfigFromArgs,
   initialize, // 导入 initialize
@@ -552,5 +553,65 @@ export function createServer(): McpServer {
     },
   );
 
+  // 根据目录Id获取接口
+  server.tool(
+    "get_interfaces_by_category_id",
+    "Get all interfaces in a specific category by category id from YApi.",
+    {
+      project_id: z.number().describe("YApi project ID"),
+      category_id: z.number().describe("Category id to search for"),
+    },
+    async ({ project_id, category_id }) => {
+      try {
+        initializeIfNeeded();
+
+        if (!project_id) {
+          throw new Error("project_id is required.");
+        }
+
+        if (!category_id) {
+          throw new Error("category_id is required.");
+        }
+
+        const interfaces = await getInterfacesByCategoryId(project_id, category_id);
+
+        // 格式化输出
+        const formattedData = {
+          category_id: category_id,
+          total_interfaces: interfaces.length,
+          interfaces: interfaces.map(item => ({
+            id: item._id,
+            title: item.title,
+            method: item.method,
+            path: item.path,
+            status: item.status,
+            tags: item.tag,
+            add_time: new Date(item.add_time * 1000).toISOString(),
+            update_time: new Date(item.up_time * 1000).toISOString()
+          }))
+        };
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(formattedData, null, 2),
+            },
+          ],
+        };
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Error: ${errorMessage}`,
+            },
+          ],
+        };
+      }
+    },
+  );
+    
   return server;
 }
